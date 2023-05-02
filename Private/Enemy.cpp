@@ -16,6 +16,7 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "Components/CapsuleComponent.h"
 #include "ScharPlayerController.h"
+#include "SpawVolume.h"
 
 
 
@@ -61,6 +62,8 @@ AEnemy::AEnemy()
 	DeathDealy=3.f;
 
 	bHasValidTarget = false;
+
+	IsSpawnedByVolume = false;
 	
 }
 
@@ -469,6 +472,33 @@ void AEnemy::Die(AActor* Causer)
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 	bAttacking = false;
+
+	// Check if enemy was spawned by volume
+
+	UE_LOG(LogTemp, Warning, TEXT("Enemy-Death"));
+
+		if (spawnvolume)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("SpawnVolume-If"));
+
+			if (IsSpawnedByVolume == true)
+			{
+
+				UE_LOG(LogTemp, Warning, TEXT("IsSpawnedByVolume==true"));
+
+
+				//spawnvolume->NumberAlive--;
+						// Remove enemy from list of spawned enemies
+					//	spawnvolume->EnemiesAliveArray.Remove(this);
+					//	spawnvolume->NumberAlive--;
+						
+						spawnvolume->OnEnemyDeath(this);
+				//	spawnvolume->arraysize = spawnvolume->EnemiesAliveArray.Num();
+
+
+			}
+		}
+	
 
 	ASchar* Schar = Cast<ASchar>(Causer);
 	if (Schar)

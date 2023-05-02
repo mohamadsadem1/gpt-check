@@ -337,24 +337,17 @@ void ASchar::AttackEnd()
 	}
 }
 
-void ASchar::OnEnemyKilled(AActor* Enemy)
+/*void ASchar::OnEnemyKilled(AActor* Enemy)
 {
 	// Get the name of the enemy and store it in the map with the name of the character who killed it
 	FString EnemyName = Enemy->GetName();
+
 	FString PlayerName = GetName();
+	
 	EnemiesKilledByPlayer.Add(EnemyName, PlayerName);
 }
+*/
 
-void CheckEnemiesKilledByPlayer(FString EnemyName, FString RewardItem)
-{
-	FString* PlayerNamePtr = ASchar::EnemiesKilledByPlayer.Find(EnemyName);
-	if (PlayerNamePtr)
-	{
-		FString PlayerName = *PlayerNamePtr;
-		// Give the reward to the character who killed the enemy
-		// You could use a tag or a custom event to identify the character and give them the reward
-	}
-}
 
 void ASchar::SetInterpToEnmey(bool Interp)
 {

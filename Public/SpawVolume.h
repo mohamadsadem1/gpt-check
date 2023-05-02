@@ -1,3 +1,5 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
 #pragma once
 
 #include "CoreMinimal.h"
@@ -12,124 +14,98 @@ class MYPROJECT9_API ASpawVolume : public AActor
 public:
 	// Sets default values for this actor's properties
 	ASpawVolume();
+
+	/*
+				SPAWNING LOGIC
+	*/
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Spawning | Logic")
+	int32 NumberAlive;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Spawning | Logic")
+	int32 MaxNumberAlive;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Spawning | Logic")
+	int32 NumberEnemySpawned;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Spawning | Logic")
+	int32 MaxNumberEnmeySpawned;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Spawning | Logic")
+	bool bOverlapingWithVolumeBox;
+	int32 Index1;
+
+
+	/*
+				ENEMIES TO SPAWN/ARRAY
+	*/
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Spawning")
 		class UBoxComponent* SpawningBox;
-	/*
-				ENEMY TYPES TO SPAWN IN _SPAWNVOLUME_
-	*/
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Spawning")
-		TSubclassOf<class AEnemy> Actor_1;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Spawning")
-		TSubclassOf<AEnemy> Actor_2;
+		TSubclassOf<AActor> Actor_1;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Spawning")
-		TSubclassOf<AEnemy> Actor_3;
+		TSubclassOf<AActor> Actor_2;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Spawning")
-		TSubclassOf<AEnemy> Actor_4;
+		TSubclassOf<AActor> Actor_3;
 
-	UPROPERTY(EditAnywhere, Category = "Spawning")
-		TSubclassOf<AEnemy> EnemyClass;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Spawning")
+		TSubclassOf<AActor> Actor_4;
 
-	TArray<TSubclassOf<AEnemy>>EnemiesSpawnArray;
+	TArray<TSubclassOf<AActor>> SpawnArray;
+
 
 	/*
-				TYPE OF SPELL TO SPAWN WHEN ENEMY DIE
+				SPELL TO SPAWN/ARRAY
 	*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Spawning")
-		TSubclassOf<class AEnemy> Spell_1;
+		TSubclassOf<AActor> Spell_1;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Spawning")
-		TSubclassOf<AEnemy> Spell_2;
+		TSubclassOf<AActor> Spell_2;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Spawning")
-		TSubclassOf<AEnemy> Spell_3;
+		TSubclassOf<AActor> Spell_3;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Spawning")
-		TSubclassOf<AEnemy> Spell_4;
+		TSubclassOf<AActor> Spell_4;
 
-	UPROPERTY(EditAnywhere, Category = "Spawning")
-		TSubclassOf<AEnemy> SpellClass;
+	TArray<TSubclassOf<AActor>>ItemArray;
 
-	TArray<TSubclassOf<AActor>>spellSpawnArray;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Spawning")
+	TArray <class AEnemy*> EnemiesAliveArray;
 
-	TArray<FString>EnemiesNamesArray;
-
-	/*
-				LOGIC OF SPAWNING ENEMIES
-	*/
-
-	bool bCharacterOverlapingWithSpawn;
-
-	int32 Number_SpawnedEnemies;
-
-	int32 Number_AliveEnemies;
-
-	int32 MaxEnemies;
-
-	int32 MaxEnemiesAlive;
-
-	/*
-			TIMER TO SPAWN ENEMIES
-	*/
-	float SpawnDelayMin;
-
-	float SpawnDelayMax;
-
-	FTimerHandle SpawnTimer;
-
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Spawning")
+	int32 arraysize;
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-
-	UFUNCTION(BlueprintNativeEvent, Category = "Spawning")
-		void SpawnEnemy();
-
-	virtual void SpawnEnemy_Implementation();
-
 
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
 	UFUNCTION(BlueprintPure, Category = "Spawning")
-		TSubclassOf<class AActor> GetSpawnActor();
+	FVector GetSpawnPoint();
 
 	UFUNCTION(BlueprintPure, Category = "Spawning")
-		FVector GetSpawnPoint();
+	TSubclassOf<AActor> GetSpawnActor();
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Spawning")
-		void SpawnOurPawn(UClass* ToSpawn, const FVector& Location);
+	void SpawnOurActor(UClass* ToSpawn, const FVector& Location);
 
-	UFUNCTION()
-		void SpawnOurSpell(UClass* ToSpawn, const FVector& Location);
-
-
-	void SpawnNextEnemy(float Delay);
-
-	FVector GetRandomSpawnLocation() const;
-
-	void EnemyDeath(AEnemy* DeadEnemy);
-
-	UFUNCTION()
-		void ActorDestroy(AActor* Actor);
+	void OnEnemyDeath(AEnemy*Enemy);
 
 
-	/*
-			OVERLAPING LOGIC
-	*/
-	UFUNCTION()
-		virtual void HandleOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+
+	UFUNCTION(BlueprintCallable)
+	virtual void VolumeOnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 			UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
 	UFUNCTION()
-		virtual void HandleOverlapEnd(UPrimitiveComponent* OverlappedComponent,
+	virtual void VolumeOnOverlapEnd(UPrimitiveComponent* OverlappedComponent,
 			AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
-
-
-
-
 
 };

@@ -1,12 +1,12 @@
-
+// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "SpawVolume.h"
 #include "Components/BoxComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Engine/World.h"
-#include "collect.h"
 #include "Enemy.h"
-#include "TimerManager.h"
+#include "AIController.h"
+#include "collect.h"
 
 
 // Sets default values
@@ -17,23 +17,20 @@ ASpawVolume::ASpawVolume()
 
 	SpawningBox = CreateDefaultSubobject<UBoxComponent>(TEXT("SpawningBox"));
 
+	bOverlapingWithVolumeBox = false;
 
-	SpawnDelayMin = 1.0f;
+	NumberAlive =  0;
 
-	SpawnDelayMax = 5.0f;
+	 NumberEnemySpawned = 0;
 
-	/*
-			ENEMIES COUNTERS
-	*/
-	MaxEnemiesAlive = 5;
+	 MaxNumberAlive = 5;
 
-	Number_SpawnedEnemies = 0;
+	 MaxNumberEnmeySpawned = 10;
 
-	Number_AliveEnemies = 0;
+	  Index1 = 0;
 
-	MaxEnemies = 10;
 
-	bCharacterOverlapingWithSpawn = false;
+
 
 }
 
@@ -42,24 +39,19 @@ void ASpawVolume::BeginPlay()
 {
 	Super::BeginPlay();
 
-	SpawningBox->OnComponentBeginOverlap.AddDynamic(this, &ASpawVolume::HandleOverlapBegin);
-	SpawningBox->OnComponentEndOverlap.AddDynamic(this, &ASpawVolume::HandleOverlapEnd);
-
-	if (Spell_1 && Spell_2 && Spell_3 && Spell_4)
-	{
-		spellSpawnArray.Add(Spell_1);
-		spellSpawnArray.Add(Spell_2);
-		spellSpawnArray.Add(Spell_3);
-		spellSpawnArray.Add(Spell_4);
-	}
 	if (Actor_1 && Actor_2 && Actor_3 && Actor_4)
 	{
-		EnemiesSpawnArray.Add(Actor_1);
-		EnemiesSpawnArray.Add(Actor_2);
-		EnemiesSpawnArray.Add(Actor_3);
-		EnemiesSpawnArray.Add(Actor_4);
-
+		SpawnArray.Add(Actor_1);
+		SpawnArray.Add(Actor_2);
+		SpawnArray.Add(Actor_3);
+		SpawnArray.Add(Actor_4);
 	}
+
+	SpawningBox->OnComponentBeginOverlap.AddDynamic(this, &ASpawVolume::VolumeOnOverlapBegin);
+
+	SpawningBox->OnComponentEndOverlap.AddDynamic(this, &ASpawVolume::VolumeOnOverlapEnd);
+
+
 }
 
 // Called every frame
@@ -73,117 +65,92 @@ FVector ASpawVolume::GetSpawnPoint()
 {
 	FVector Extent = SpawningBox->GetScaledBoxExtent();
 	FVector Origin = SpawningBox->GetComponentLocation();
+
 	FVector Point = UKismetMathLibrary::RandomPointInBoundingBox(Origin, Extent);
+
 	return Point;
 }
 
-
-void ASpawVolume::SpawnOurPawn_Implementation(UClass* ToSpawn, const FVector& Location)
+void ASpawVolume::SpawnOurActor_Implementation(UClass* ToSpawn, const FVector& Location)
 {
 	if (ToSpawn)
 	{
 		UWorld* World = GetWorld();
-
 		FActorSpawnParameters SpawnParams;
 
 		if (World)
 		{
-			if (Number_SpawnedEnemies < MaxEnemies && Number_AliveEnemies < MaxEnemiesAlive)
+			if (arraysize < MaxNumberEnmeySpawned)
 			{
-				APawn* PawnSpawned = World->SpawnActor<APawn>(ToSpawn, Location, FRotator::ZeroRotator, SpawnParams);
+				AActor* Actor = World->SpawnActor<AActor>(ToSpawn, Location, FRotator(0.f), SpawnParams);
 
-				if (PawnSpawned)
+				AEnemy* Enemy = Cast<AEnemy>(Actor);
+				if (Enemy)
 				{
-					// Add spawned enemy to array and increment counters
-					Number_SpawnedEnemies++;
-					Number_AliveEnemies++;
+					Enemy->SpawnDefaultController();
 
-					// Set timer to spawn next enemy
-					float SpawnDelay = FMath::FRandRange(SpawnDelayMin, SpawnDelayMax);
+					AAIController* AICont = Cast<AAIController>(Enemy->GetController());
+					if (AICont)
+					{
+						Enemy->AIController = AICont;
 
-					GetWorldTimerManager().SetTimer(SpawnTimer, this, &ASpawVolume::SpawnOurPawn_Implementation, SpawnDelay);
-					FString EnemyName = PawnSpawned->GetName();
-					EnemiesNamesArray.Add(EnemyName);
+					}
+					EnemiesAliveArray.Add(Enemy);
 
+					arraysize = EnemiesAliveArray.Num();
+					Enemy->IsSpawnedByVolume = true;
+
+					NumberAlive++;
+
+					NumberEnemySpawned++;
 				}
 			}
 		}
 	}
 }
 
-void ASpawVolume::SpawnOurSpell(UClass * ToSpawn, const FVector & Location)
+TSubclassOf<AActor> ASpawVolume::GetSpawnActor()
 {
-	UWorld* World = GetWorld();
-
-	if (World)
+	if (SpawnArray.Num() > 0)
 	{
-			FActorSpawnParameters SpawnParams;
-			class ACollect* SpellToSpawn = World->SpawnActor<ACollect>(ToSpawn, Location, FRotator::ZeroRotator, SpawnParams);
+		int32 Selection = FMath::RandRange(0, SpawnArray.Num() - 1);
 
-
+		return SpawnArray[Selection];
+	}
+	else
+	{
+		return nullptr;
 	}
 }
 
-
-	void ASpawVolume::EnemyDeath(AEnemy* DeadEnemy)
+void  ASpawVolume::OnEnemyDeath(AEnemy* Enemy1)
+{
+	if (Enemy1)
 	{
-		if (DeadEnemy)
-		{
-			// Get name of dead enemy to remove it from the array
-			FString DeadEnemyName = DeadEnemy->GetName();
-
-			// Check if dead enemy is in the array
-			if (EnemiesNamesArray.Contains(DeadEnemyName))
-			{
-				// Remove dead enemy from array and decrement counters
-				EnemiesSpawnArray.Remove(DeadEnemy);
-				Number_AliveEnemies--;
-			}
-			FVector LastLocation = DeadEnemy->GetActorLocation();
-
-			SpawnOurSpell(SpellClass, LastLocation);
-		}
+		EnemiesAliveArray.Remove(Enemy1);
 	}
+}
 
-
-	/*
-				TO HANDLE IF THE CHARACTER IS OVERLAPING WITH THE SPAWN VOLUME
-	*/
-	void ASpawVolume::HandleOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
-		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
-	{
-
-		if (OtherActor)
-		{
-			bCharacterOverlapingWithSpawn = true;
-			AEnemy* Enemies = Cast<AEnemy>(OtherActor);
-			if (OtherActor == Enemies)
-			{
-				if (Number_AliveEnemies < MaxEnemiesAlive && Number_SpawnedEnemies < MaxEnemies)
-				{
-					SpawnOurPawn_Implementation(, GetSpawnPoint());
-				}
-			}
-
-
-			if (Enemies->bDead == true)
-			{
-				if (Enemies)
-				{
-					EnemyDeath(Enemies);
-				}
-			}
-		}
-	}
-
-
-
-void ASpawVolume::HandleOverlapEnd(UPrimitiveComponent* OverlappedComponent,
-	AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+void ASpawVolume::VolumeOnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	if (OtherActor)
 	{
-
-		bCharacterOverlapingWithSpawn = false;
+		bOverlapingWithVolumeBox = true;
 	}
+
+
 }
+
+void ASpawVolume::VolumeOnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{ 
+	bOverlapingWithVolumeBox = false;
+
+
+}
+
+
+
+
+

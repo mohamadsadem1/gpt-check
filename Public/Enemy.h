@@ -53,6 +53,8 @@ public:
 	FORCEINLINE EEnimyMovementStatus GetEnimyMovementStatus() { return EnimyMovementStatus; }
 
 public:
+
+
 	/*
 			MESHES
 	*/
@@ -158,7 +160,10 @@ public:
 
 	void Disapear();
 
-	
+	class ASpawVolume* spawnvolume;
+
+	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="Spawning")
+	bool IsSpawnedByVolume;
 
 
 	/*

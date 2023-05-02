@@ -69,7 +69,6 @@ void Acollect::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* 
 void Acollect::OnOverlapEnd( UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Collect_end1"))
 
 
 

@@ -179,8 +179,8 @@ public:
 
 	static TMap<FString, FString> EnemiesKilledByPlayer; // Static map to store enemies killed by any character
 
-	UFUNCTION(BlueprintCallable, Category = "SChar")
-	void OnEnemyKilled(AActor* Enemy); // Modified function to track enemies killed by any character
+	//UFUNCTION(BlueprintCallable, Category = "SChar")
+	//void OnEnemyKilled(AActor* Enemy); // Modified function to track enemies killed by any character
 
 	virtual float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent,AController* EventInstigator, AActor* DamageCauser)override;
 
